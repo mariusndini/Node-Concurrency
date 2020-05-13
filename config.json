@@ -1,0 +1,13 @@
+{
+    "snowflake":{
+        "account":"ENTER SNOWFLAKE ACCOUNT NAME",
+        "username":"ENTER SNOWFLAKE USER",
+        "password":"ENTER SNOWFLAKE PW",
+        "warehouse":"ENTER SNOWFLAKE WH",
+        "role":"ENTER SNOWFLAKE ROLE",
+        "database":"ENTER DEFAULT DB"
+    }
+}
+
+
+
