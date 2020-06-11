@@ -4,36 +4,41 @@ const config = require('./config.json');
 const snowflake = require('./snowflakeWrapper.js');
 var dbConn = null;
 
+// change this var to the number times you want to run quiries
+var numberOfTimesToRunQuiries = 50;
 
-var SQL = ` SELECT ENDPROCESSINGDAYSTRING AS DAY, 
-            COUNT(ID) - (SUM(IFF(PROCESSINGSTATUS= 'Successful',1,0)) + SUM(IFF(PROCESSINGSTATUS= 'Abandoned',1,0))) AS DIFF,
-            SUM(IFF(PROCESSINGSTATUS= 'Successful',1,0)) as SUCCESSFUL,
-            IFF(ENDPROCESSINGDAYSTRING= '2020-02-03',1,0) as THISDATE
+// list of your quiries
+var SQL = [` select * from "ANONDB"."CCM"."TBLSMUSER"; `, 
+          ` select 'a' ` ,
+          ` select 'b' ` ,
+          ` select 'c' ` ];
 
-            FROM DBO.QUEUEITEMS 
-            WHERE DAY IS NOT NULL
-            GROUP BY 1`;
+// ---------------------------------------------------------
 
+console.log('START', new Date());
 return snowflake.connect()
 .then((dbConnection)=>{
     dbConn = dbConnection;
-    return snowflake.runSQL(dbConn, "ALTER SESSION SET QUERY_TAG = LARGE_CONCURRENCY_50;").then((data)=>{
+    console.log('CONNECT', new Date());
+    return snowflake.runSQL(dbConn, "ALTER SESSION SET QUERY_TAG = ED_CONCURENCY;").then((data)=>{
         console.log(Date.now(), data);
     })
 })
 .then(()=>{
+    console.log('CONNECTED', new Date());
     var promises = [];
-    for(i=0; i < 50; i++){
-        promises.push(snowflake.runSQL(dbConn, SQL).then((data)=>{
+    for(i=0; i < numberOfTimesToRunQuiries; i++){
+        var queryID = i % SQL.length;
+        promises.push(snowflake.runSQL(dbConn, SQL[queryID]).then((data)=>{
             console.log(Date.now(), data);
         }))   
     }
-
+    //console.log('RUNQUERY', new Date());
     return Promise.all( promises );
 
 }).then(()=>{
-
-    return snowflake.runSQL(dbConn, `ALTER WAREHOUSE "CONCURRENCY" SUSPEND;`).then((data)=>{
+    return snowflake.runSQL(dbConn, `ALTER WAREHOUSE ${config.snowflake.warehouse} SUSPEND;`).then((data)=>{
+        console.log('DONE', new Date());
         console.log(Date.now(), data);
     })
 })
